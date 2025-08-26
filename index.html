@@ -3,21 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Treenipäiväkirja PWA</title>
+<title>Painonnosto Appi</title>
 <link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.json">
 </head>
 <body>
-<div id="app">
-  <nav class="bottom-nav">
-    <button id="nav-home" class="active">Etusivu</button>
-    <button id="nav-program">Ohjelma</button>
-    <button id="nav-today">Tänään</button>
+<header>
+  <nav>
+    <button onclick="navigate('home')">Etusivu</button>
+    <button onclick="navigate('program')">Ohjelma</button>
+    <button onclick="navigate('today')">Tänään</button>
+    <button onclick="navigate('settings')">Asetukset</button>
   </nav>
-  <main id="main-content">
-    <!-- Dynamically rendered content via app.js -->
-  </main>
-</div>
+</header>
+<main id="content"></main>
 <script src="app.js"></script>
 </body>
 </html>
