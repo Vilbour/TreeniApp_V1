@@ -1,7 +1,8 @@
+// Täysin toimiva V3-versio
 (function(){
-  const LS_KEY = 'weightliftingApp_v1';
+  const LS_KEY = 'weightliftingApp_v3';
 
-  // --- 1RM oletukset ---
+  // --- Oletus 1RM ---
   const default1RM = {
     snatch: 70,
     cj: 90,
@@ -11,8 +12,8 @@
     bench: 105
   };
 
-  // --- Alkuperäinen 8 viikon ohjelma ---
-  const programData = [/* LIITÄ TÄHÄN ALKUperäinen 8 viikon JSON ohjelma */];
+  // --- Tässä säilytetään alkuperäinen 8 viikon ohjelma ---
+  const programData = [/* LIITÄ TÄHÄN alkuperäinen 8 viikon ohjelma JSON-rakenne */];
 
   // --- state ---
   function loadState() {
@@ -28,9 +29,19 @@
   let currentWeek = 0;
   let currentDay = 0;
 
-  // --- helperit ---
   function roundKg(x){ return Math.round(x/2.5)*2.5; }
   function el(tag, cls){ const e=document.createElement(tag); if(cls) e.className=cls; return e; }
+
+  function mapToKey(name){
+    const k = name.toLowerCase();
+    if(k.includes('snatch')) return 'snatch';
+    if(k.includes('clean')) return 'cj';
+    if(k.includes('front')) return 'frontSquat';
+    if(k.includes('back')) return 'backSquat';
+    if(k.includes('dead')) return 'deadlift';
+    if(k.includes('bench')) return 'bench';
+    return 'bench';
+  }
 
   // --- render-funktiot ---
   function renderHome(){
