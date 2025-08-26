@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painonnosto Appi</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
+<title>Treenipäiväkirja PWA</title>
 <link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
-<header>
-  <nav>
-    <button onclick="navigate('home')">Etusivu</button>
-    <button onclick="navigate('program')">Ohjelma</button>
-    <button onclick="navigate('today')">Tänään</button>
-    <button onclick="navigate('settings')">Asetukset</button>
+<div id="app">
+  <nav class="bottom-nav">
+    <button id="nav-home" class="active">Etusivu</button>
+    <button id="nav-program">Ohjelma</button>
+    <button id="nav-today">Tänään</button>
   </nav>
-</header>
-<main id="content"></main>
+  <main id="main-content">
+    <!-- Dynamically rendered content via app.js -->
+  </main>
+</div>
 <script src="app.js"></script>
 </body>
 </html>
