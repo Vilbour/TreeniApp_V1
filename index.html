@@ -1,64 +1,21 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>TreeniApp</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#00fff0" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painonnosto App</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app">
-    <header class="app-header">
-      <div>
-        <h1>🏋️ TreeniApp</h1>
-        <div id="subline" class="subline">8 vk painonnosto • Muokattava ohjelma</div>
-      </div>
-      <div class="hdr-actions">
-        <button id="btnExport" class="ghost">Vie</button>
-        <button id="btnImport" class="ghost">Tuo</button>
-        <input id="fileImport" type="file" accept="application/json" hidden>
-      </div>
-    </header>
+  <nav class="navbar">
+    <button onclick="navigate('home')">Etusivu</button>
+    <button onclick="navigate('program')">Ohjelma</button>
+    <button onclick="navigate('today')">Tänään</button>
+    <button onclick="navigate('settings')">Asetukset</button>
+  </nav>
 
-    <main id="main">
-      <nav class="tabs" role="tablist">
-        <button role="tab" data-view="home" class="active">Etusivu</button>
-        <button role="tab" data-view="program">Ohjelma</button>
-        <button role="tab" data-view="today">Tänään</button>
-        <button role="tab" data-view="settings">Asetukset</button>
-      </nav>
+  <main id="view"></main>
 
-      <section id="view" class="view"></section>
-    </main>
-
-    <footer class="footer">Lisää kotiin > Safari → Jaa → Lisää Koti-näyttöön</footer>
-  </div>
-
-  <template id="tmpl-week">
-    <article class="card week-card">
-      <div class="week-head">
-        <div><div class="eyebrow"></div><h3></h3></div>
-        <div class="badge"></div>
-      </div>
-      <div class="week-days"></div>
-    </article>
-  </template>
-
-  <template id="tmpl-day">
-    <div class="day-card card">
-      <div class="day-head">
-        <div><div class="eyebrow small"></div><h4></h4></div>
-        <div class="day-actions">
-          <button class="btn small openDay">Avaa</button>
-        </div>
-      </div>
-      <div class="progress"><div class="bar"></div></div>
-      <div class="day-kicker"></div>
-    </div>
-  </template>
-
-  <script defer src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
