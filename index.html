@@ -3,19 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PainonnostoApp</title>
+  <title>PainonnostoAppi</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav class="navbar">
-    <button onclick="navigate('home')">Etusivu</button>
-    <button onclick="navigate('program')">Ohjelma</button>
-    <button onclick="navigate('today')">Tänään</button>
-    <button onclick="navigate('settings')">Asetukset</button>
+  <nav>
+    <button onclick="showPage('home')">Etusivu</button>
+    <button onclick="showPage('program')">Ohjelma</button>
+    <button onclick="showPage('today')">Tänään</button>
+    <button onclick="showPage('settings')">Asetukset</button>
   </nav>
 
-  <main id="app"></main>
+  <main>
+    <!-- Etusivu -->
+    <section id="home" class="page active">
+      <h1>1RM Syöttö</h1>
+      <form id="rmForm">
+        <label>Snatch 1RM (kg): <input type="number" id="snatch"></label><br>
+        <label>C&J 1RM (kg): <input type="number" id="cleanjerk"></label><br>
+        <label>Takakyykky 1RM (kg): <input type="number" id="backsquat"></label><br>
+        <label>Etukyykky 1RM (kg): <input type="number" id="frontsquat"></label><br>
+        <label>Penkki 1RM (kg): <input type="number" id="bench"></label><br>
+        <label>Mave 1RM (kg): <input type="number" id="deadlift"></label><br>
+        <button type="submit">Tallenna</button>
+      </form>
+    </section>
 
-  <script src="app.js"></script>
+    <!-- Ohjelma -->
+    <section id="program" class="page">
+      <h1>Ohjelma</h1>
+      <div id="programContent"></div>
+      <div class="nav-buttons">
+        <button onclick="prevDay()">◀</button>
+        <span id="dayIndicator">Päivä 1</span>
+        <button onclick="nextDay()">▶</button>
+      </div>
+    </section>
+
+    <!-- Tänään -->
+    <section id="today" class="page">
+      <h1>Tänään</h1>
+      <div id="todayContent"></div>
+    </section>
+
+    <!-- Asetukset -->
+    <section id="settings" class="page">
+      <h1>Asetukset</h1>
+      <p>Täällä myöhemmin lisätoimintoja.</p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
