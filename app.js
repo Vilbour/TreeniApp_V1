@@ -1,112 +1,89 @@
-// --- DATA ---
-let user1RM = JSON.parse(localStorage.getItem("user1RM")) || {
+let oneRM = JSON.parse(localStorage.getItem("oneRM")) || {
   snatch: 70,
-  cleanjerk: 90,
-  squat: 130,
-  bench: 110,
-  deadlift: 195,
+  cj: 90,
+  squat: 130
 };
 
 let program = [
-  { day: 1, exercises: [
-    { name: "Snatch", pct: 0.7, reps: "5x3" },
-    { name: "Back Squat", pct: 0.75, reps: "5x5" },
-  ]},
-  { day: 2, exercises: [
-    { name: "Clean & Jerk", pct: 0.7, reps: "5x3" },
-    { name: "Front Squat", pct: 0.7, reps: "5x5" },
-  ]},
-  { day: 3, exercises: [
-    { name: "Snatch Pull", pct: 0.9, reps: "4x3" },
-    { name: "Bench Press", pct: 0.7, reps: "5x5" },
-  ]}
+  { day: "Päivä 1", workout: ["Snatch 5x3 @70%", "CJ 5x2 @75%", "Squat 5x5 @80%"] },
+  { day: "Päivä 2", workout: ["Snatch pulls 4x3 @90%", "Front squat 5x3 @75%"] },
+  { day: "Päivä 3", workout: ["Power snatch 5x2 @65%", "CJ 5x2 @70%", "Back squat 5x3 @85%"] }
 ];
 
-let currentDayIndex = 0;
+let currentDay = 0;
 
-// --- NAVIGATION ---
-function navigate(page) {
-  if (page === "home") renderHome();
-  if (page === "program") renderProgram();
-  if (page === "today") renderToday();
-  if (page === "settings") renderSettings();
+function navigate(view) {
+  const app = document.getElementById("app");
+  if (view === "home") renderHome(app);
+  if (view === "program") renderProgram(app);
+  if (view === "today") renderToday(app);
+  if (view === "settings") renderSettings(app);
 }
 
-function renderHome() {
-  document.getElementById("view").innerHTML = `
-    <h2>Syötä 1RM tuloksesi</h2>
-    <form id="rmForm">
-      ${Object.keys(user1RM).map(lift => `
-        <label>${lift}: <input type="number" name="${lift}" value="${user1RM[lift]}" /></label>
-      `).join("<br>")}
-      <button type="submit">Tallenna</button>
-    </form>
+function renderHome(app) {
+  app.innerHTML = `
+    <div class="card">
+      <h2>Syötä 1RM tulokset</h2>
+      <label>Snatch: <input id="snatch" type="number" value="${oneRM.snatch}"></label><br>
+      <label>C&J: <input id="cj" type="number" value="${oneRM.cj}"></label><br>
+      <label>Squat: <input id="squat" type="number" value="${oneRM.squat}"></label><br>
+      <button onclick="saveOneRM()">Tallenna</button>
+    </div>
   `;
+}
 
-  document.getElementById("rmForm").onsubmit = e => {
-    e.preventDefault();
-    const data = new FormData(e.target);
-    Object.keys(user1RM).forEach(lift => {
-      user1RM[lift] = parseFloat(data.get(lift)) || 0;
-    });
-    localStorage.setItem("user1RM", JSON.stringify(user1RM));
-    alert("Tallennettu!");
+function renderProgram(app) {
+  const day = program[currentDay];
+  app.innerHTML = `
+    <div class="card">
+      <h2>${day.day}</h2>
+      <ul>${day.workout.map(w => `<li>${parseWeights(w)}</li>`).join("")}</ul>
+      <button onclick="prevDay()">← Edellinen</button>
+      <button onclick="nextDay()">Seuraava →</button>
+    </div>
+  `;
+}
+
+function renderToday(app) {
+  app.innerHTML = `<div class="card"><h2>Tänään</h2><p>Tee ohjelman mukaan!</p></div>`;
+}
+
+function renderSettings(app) {
+  app.innerHTML = `
+    <div class="card">
+      <h2>Asetukset</h2>
+      <p>Voit muokata 1RM tuloksia etusivulta.</p>
+    </div>
+  `;
+}
+
+function saveOneRM() {
+  oneRM = {
+    snatch: parseInt(document.getElementById("snatch").value),
+    cj: parseInt(document.getElementById("cj").value),
+    squat: parseInt(document.getElementById("squat").value)
   };
+  localStorage.setItem("oneRM", JSON.stringify(oneRM));
+  alert("Tallennettu!");
 }
 
-function renderProgram() {
-  const day = program[currentDayIndex];
-  document.getElementById("view").innerHTML = `
-    <h2>Päivä ${day.day}</h2>
-    <ul>
-      ${day.exercises.map(ex =>
-        `<li>${ex.name}: ${(ex.pct * user1RM[mapLift(ex.name)]).toFixed(1)} kg (${ex.reps})</li>`
-      ).join("")}
-    </ul>
-    <button onclick="prevDay()">Edellinen</button>
-    <button onclick="nextDay()">Seuraava</button>
-  `;
-}
-
-function renderToday() {
-  const todayIndex = new Date().getDay() % program.length;
-  const day = program[todayIndex];
-  document.getElementById("view").innerHTML = `
-    <h2>Tänään - Päivä ${day.day}</h2>
-    <ul>
-      ${day.exercises.map(ex =>
-        `<li>${ex.name}: ${(ex.pct * user1RM[mapLift(ex.name)]).toFixed(1)} kg (${ex.reps})</li>`
-      ).join("")}
-    </ul>
-  `;
-}
-
-function renderSettings() {
-  document.getElementById("view").innerHTML = `
-    <h2>Asetukset</h2>
-    <p>Voit muokata 1RM arvojasi etusivulla.</p>
-  `;
-}
-
-// --- HELPERS ---
-function mapLift(name) {
-  if (name.toLowerCase().includes("snatch")) return "snatch";
-  if (name.toLowerCase().includes("clean")) return "cleanjerk";
-  if (name.toLowerCase().includes("squat") && !name.toLowerCase().includes("front")) return "squat";
-  if (name.toLowerCase().includes("front")) return "squat";
-  if (name.toLowerCase().includes("bench")) return "bench";
-  if (name.toLowerCase().includes("dead")) return "deadlift";
-  return "snatch";
+function parseWeights(text) {
+  return text.replace(/@(\d+)%/g, (m, p) => {
+    if (text.includes("Snatch")) return Math.round(oneRM.snatch * p / 100) + "kg";
+    if (text.includes("CJ")) return Math.round(oneRM.cj * p / 100) + "kg";
+    if (text.includes("Squat")) return Math.round(oneRM.squat * p / 100) + "kg";
+    return m;
+  });
 }
 
 function nextDay() {
-  currentDayIndex = (currentDayIndex + 1) % program.length;
-  renderProgram();
-}
-function prevDay() {
-  currentDayIndex = (currentDayIndex - 1 + program.length) % program.length;
-  renderProgram();
+  currentDay = (currentDay + 1) % program.length;
+  navigate("program");
 }
 
-// --- INIT ---
+function prevDay() {
+  currentDay = (currentDay - 1 + program.length) % program.length;
+  navigate("program");
+}
+
 navigate("home");
