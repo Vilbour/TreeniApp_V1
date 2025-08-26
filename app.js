@@ -1,203 +1,218 @@
+// app.js — V3 puhdas & toimiva
 (function(){
-  const LS_KEY = 'wl_state_v4_fixed';
+  const LS = 'wl_v3_state';
+  const defaults = { snatch:70, cj:90, deadlift:170, frontSquat:115, backSquat:140, bench:105 };
 
-  // Oletus 1RM
-  const default1RM = {
-    snatch: 70,
-    cj: 90,
-    deadlift: 170,
-    frontSquat: 115,
-    backSquat: 140,
-    bench: 105
-  };
-
-  // --- Program generator (täsmälleen alkuperäinen 8 viikkoa) ---
-  function genProgram() {
+  // ===== 8 VIIKON OHJELMA (deterministinen, ei arpomista) =====
+  function buildProgram(){
     const weeks = [];
-    const mainRotation = ['Clean & Jerk', 'Snatch', 'Deadlift', 'Squat'];
-    const squatWeek = (w) => (w % 2 === 1 ? 'Front Squat' : 'Back Squat');
     const phases = {
-      1:{label:'Tekniikka', pct: {CJ:[60,65], SN:[60,65], SQ:[60,70], DL:[60,70]}},
-      2:{label:'Rakenna',   pct: {CJ:[70,75], SN:[70,75], SQ:[70,80], DL:[70,80]}},
-      3:{label:'Rakenna',   pct: {CJ:[75,80], SN:[75,80], SQ:[75,85], DL:[75,85]}},
-      4:{label:'Rakenna',   pct: {CJ:[80,82], SN:[78,82], SQ:[80,87], DL:[78,85]}},
-      5:{label:'Voima',     pct: {CJ:[80,85], SN:[78,83], SQ:[82,88], DL:[80,88]}},
-      6:{label:'Voima',     pct: {CJ:[83,87], SN:[80,85], SQ:[85,90], DL:[82,90]}},
-      7:{label:'Voima',     pct: {CJ:[85,88], SN:[82,86], SQ:[87,92], DL:[85,92]}},
-      8:{label:'Maksimit',  pct: {CJ:[90,100],SN:[90,100],SQ:[90,100],DL:[90,100]}}
+      1:{name:'Tekniikka',   pct:{CJ:[60,65], SN:[60,65], SQ:[60,70], DL:[60,70]}, sr:{s:4,r:3, note:'Tekniikka: kontrolli, pysähdykset, kevyet sarjat'}},
+      2:{name:'Sarjapainot', pct:{CJ:[70,75], SN:[70,75], SQ:[70,80], DL:[70,80]}, sr:{s:5,r:3, note:'Nosta sarjapainoja nousujohteisesti'}},
+      3:{name:'Sarjapainot', pct:{CJ:[75,80], SN:[75,80], SQ:[75,85], DL:[75,85]}, sr:{s:5,r:3, note:'Pidä tekniikka siistinä'}},
+      4:{name:'Sarjapainot', pct:{CJ:[80,82], SN:[78,82], SQ:[80,87], DL:[78,85]}, sr:{s:5,r:3, note:'Hieman kovempi viikko'}},
+      5:{name:'Voima',       pct:{CJ:[80,85], SN:[78,83], SQ:[85,90], DL:[82,90]}, sr:{s:5,r:2, note:'Voima: pidemmät palautukset'}},
+      6:{name:'Voima',       pct:{CJ:[83,87], SN:[80,85], SQ:[87,92], DL:[85,92]}, sr:{s:5,r:2, note:'Kovat pääsarjat'}},
+      7:{name:'Voima',       pct:{CJ:[85,88], SN:[82,86], SQ:[88,92], DL:[86,92]}, sr:{s:5,r:2, note:'Huipennus ennen maksimeja'}},
+      8:{name:'Maksimit',    pct:{CJ:[90,100],SN:[90,100],SQ:[90,100],DL:[90,100]}, sr:{s:5,r:1, note:'Maksimi-viikko: 1RM testit'}}
     };
-    const accessoriesBase = {
-      pull:['Penkkipunnerrus','Kulmasoutu', 'Leuanveto', 'Pystypunnerrus'],
-      legs:['Askelkyykky', 'Reidenkoukistus', 'Reidenojennus', 'Bulgarialainen kyykky'],
-      posterior:['Hip thrust', 'Glute ham raise', 'Selänojennus', 'Romanian deadlift'],
-      push:['Dippi', 'Rintaprässi', 'Flyes käsipainoilla', 'Arnold press']
-    };
-    const coreStrength = ['Painotettu hollow hold', 'Painotettu russian twist', 'Kahvakuula-farmarikävely', 'Turkish get-up'];
-    const coreEndurance = ['Hollow hold', 'Plank', 'Side plank', 'Dead bug'];
 
-    for (let w = 1; w <= 8; w++) {
-      const phase = phases[w];
+    // apuliikkeet (pääliikekohtaiset, järjestys deterministinen)
+    const ACC = {
+      'Snatch':       [{name:'Overhead Squat',sets:3,reps:5},{name:'Snatch Pull',sets:4,reps:3},{name:'Snatch Balance',sets:3,reps:3},{name:'Face Pull',sets:3,reps:12}],
+      'Clean & Jerk': [{name:'Clean Pull',sets:4,reps:3},{name:'Push Press',sets:4,reps:5},{name:'Jerk Dip',sets:3,reps:5},{name:'Strict Press',sets:3,reps:8}],
+      'Front Squat':  [{name:'Romanian Deadlift',sets:3,reps:6},{name:'DB Row',sets:3,reps:10},{name:'Lunge',sets:3,reps:8},{name:'Leg Curl',sets:3,reps:12}],
+      'Back Squat':   [{name:'Hip Thrust',sets:4,reps:6},{name:'Leg Press',sets:3,reps:10},{name:'Good Morning',sets:3,reps:6},{name:'Back Extension',sets:3,reps:12}],
+      'Deadlift':     [{name:'Good Morning',sets:3,reps:6},{name:'Back Extension',sets:3,reps:12},{name:'Hamstring Curl',sets:3,reps:10},{name:'Row (Cable/DB)',sets:3,reps:10}]
+    };
+
+    const CORE_K = ['Plank', 'Side Plank', 'Hollow Hold', 'Dead Bug'];               // parittomat = kestävyys
+    const CORE_V = ['Weighted Plank', 'KB Farmer Carry', 'Turkish Get-up', 'GHD Sit-up (weighted)']; // parilliset = voima
+
+    const dayOrder = ['Snatch','Clean & Jerk','Squat','Deadlift'];
+    const squatOf = (w)=> (w%2===1 ? 'Front Squat' : 'Back Squat');
+
+    for(let w=1; w<=8; w++){
+      const ph = phases[w];
       const days = [];
-      for (let d = 0; d < 4; d++) {
-        let main = mainRotation[d];
-        if (main === 'Squat') main = squatWeek(w);
-        const mainKey = (n)=>{
-          const k = n.toLowerCase();
-          if (k.includes('clean')) return 'cj';
-          if (k.includes('snatch')) return 'snatch';
-          if (k.includes('front')) return 'frontSquat';
-          if (k.includes('back')) return 'backSquat';
-          if (k.includes('dead')) return 'deadlift';
-          return 'bench';
-        };
-        const pctRange = (()=>{
-          if (main.includes('Clean')) return phase.pct.CJ;
-          if (main.includes('Snatch')) return phase.pct.SN;
-          if (main.includes('Squat')) return phase.pct.SQ;
-          if (main.includes('Dead')) return phase.pct.DL;
-          return [65,75];
-        })();
-        const pct = w===8 ? [95, 100] : pctRange;
-        const setsReps = (()=>{
-          if (w===1) return {sets:4, reps:3, notes:'Tekniikkapainotus'};
-          if (w<=4) return {sets:5, reps:3, notes:'Rakenna sarjapainoja'};
-          if (w<=7) return {sets:5, reps:2, notes:'Voimapainotus'};
-          return {sets:5, reps:1, notes:'Maksimiykköset'};
+      for(let d=0; d<4; d++){
+        let mainName = dayOrder[d];
+        if(mainName==='Squat') mainName = squatOf(w);
+
+        const pct = (()=>{
+          if(mainName.includes('Snatch')) return ph.pct.SN;
+          if(mainName.includes('Clean'))  return ph.pct.CJ;
+          if(mainName.includes('Squat'))  return ph.pct.SQ;
+          return ph.pct.DL; // Deadlift
         })();
 
-        function pick(arr, n){
-          const a = [...arr];
-          const out = [];
-          while (out.length < n && a.length) {
-            const i = Math.floor(Math.random()*a.length);
-            out.push(a.splice(i,1)[0]);
-          }
-          return out;
-        }
-        const accPool = [
-          ...pick(accessoriesBase.pull,1),
-          ...pick(accessoriesBase.push,1),
-          ...pick(accessoriesBase.legs,1),
-          ...pick(accessoriesBase.posterior,1)
-        ];
-        const accessoryCount = 2 + (w%3===0 ? 2:1);
-        const accessories = pick(accPool, accessoryCount).map(n=>({name:n, sets:3, reps:10}));
+        // apuliikkeiden määrä 2–4, deterministisesti viikon mukaan
+        const accList = ACC[mainName] || [];
+        const accCount = 2 + ((w+ d) % 3); // 2,3,4 kiertäen
+        const accessories = accList.slice(0, Math.min(accCount, accList.length));
 
-        const core = (w%2===0?coreStrength:coreEndurance);
-        const coreSel = pick(core, 1)[0];
+        // core valinta: parilliset = VOIMA, parittomat = KESTÄVYYS
+        const coreList = (w%2===0 ? CORE_V : CORE_K);
+        const core = { name: coreList[d % coreList.length], sets: (w%2===0?4:3), reps: (w%2===0?8:45) };
 
         days.push({
           title: `Päivä ${d+1}`,
-          main: { name: main, pctFrom: pct[0], pctTo: pct[1], ...setsReps, key: mainKey(main) },
+          main: {
+            name: mainName,
+            key: rmKeyByName(mainName),
+            pctFrom: pct[0],
+            pctTo: pct[1],
+            sets: ph.sr.s,
+            reps: ph.sr.r,
+            notes: ph.sr.note
+          },
           accessories,
-          core: { name: coreSel, sets: (w%2===0?4:3), reps: (w%2===0?8:20) }
+          core
         });
       }
-      weeks.push({week:w, phase:phase.label, days});
+      weeks.push({ week:w, phase: ph.name, days });
     }
     return weeks;
   }
 
-  // --- state ---
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch(e){}
-    return {oneRM:{...default1RM}, program: genProgram()};
+  // ===== State =====
+  const state = load();
+  function load(){
+    try{ const raw = localStorage.getItem(LS); if(raw) return JSON.parse(raw); }catch{}
+    return { oneRM: {...defaults}, program: buildProgram() };
   }
-  function saveState() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  function save(){ localStorage.setItem(LS, JSON.stringify(state)); }
 
-  let state = loadState();
-  let currentWeek = 0;
-  let currentDay = 0;
-
-  // --- helpers ---
-  function roundKg(x){ return Math.round(x/2.5)*2.5; }
-  function el(tag, cls){ const e=document.createElement(tag); if(cls) e.className=cls; return e; }
-  function mapToKey(name){
-    const k = name.toLowerCase();
+  // ===== Helpers =====
+  function $(s){ return document.querySelector(s); }
+  function el(t,c){ const e=document.createElement(t); if(c) e.className=c; return e; }
+  function kg(x){ return Math.round(x/2.5)*2.5; }
+  function rmKeyByName(n){
+    const k=n.toLowerCase();
     if(k.includes('snatch')) return 'snatch';
     if(k.includes('clean')) return 'cj';
     if(k.includes('front')) return 'frontSquat';
-    if(k.includes('back')) return 'backSquat';
-    if(k.includes('dead')) return 'deadlift';
+    if(k.includes('back'))  return 'backSquat';
+    if(k.includes('dead'))  return 'deadlift';
     if(k.includes('bench')) return 'bench';
-    return 'bench';
+    return 'snatch';
   }
 
-  // --- render ---
+  let curW = 0, curD = 0;
+
+  // ===== Views =====
   function renderHome(){
-    const c = document.getElementById('content'); c.innerHTML='';
-    const card = el('div','card'); card.innerHTML='<h2>Syötä 1RM</h2>';
-    const form = el('form');
-    form.innerHTML = `
-      <label>Snatch <input name="snatch" type="number" value="${state.oneRM.snatch}"></label>
-      <label>Clean & Jerk <input name="cj" type="number" value="${state.oneRM.cj}"></label>
-      <label>Deadlift <input name="deadlift" type="number" value="${state.oneRM.deadlift}"></label>
-      <label>Front Squat <input name="frontSquat" type="number" value="${state.oneRM.frontSquat}"></label>
-      <label>Back Squat <input name="backSquat" type="number" value="${state.oneRM.backSquat}"></label>
-      <label>Bench <input name="bench" type="number" value="${state.oneRM.bench}"></label>
-      <button type="submit">Tallenna</button>
+    const c = $('#content'); c.innerHTML='';
+    const card = el('div','card');
+    card.innerHTML = `
+      <h2>1RM-arvot</h2>
+      <div class="inputs">
+        <label>Snatch <input name="snatch" type="number" value="${state.oneRM.snatch}"></label>
+        <label>Clean & Jerk <input name="cj" type="number" value="${state.oneRM.cj}"></label>
+        <label>Deadlift <input name="deadlift" type="number" value="${state.oneRM.deadlift}"></label>
+        <label>Front Squat <input name="frontSquat" type="number" value="${state.oneRM.frontSquat}"></label>
+        <label>Back Squat <input name="backSquat" type="number" value="${state.oneRM.backSquat}"></label>
+        <label>Bench <input name="bench" type="number" value="${state.oneRM.bench}"></label>
+      </div>
+      <div class="row">
+        <button id="saveRM" class="btn">Tallenna</button>
+        <button id="openProgram" class="btn ghost">Avaa ohjelma</button>
+      </div>
+      <div class="hr"></div>
+      <p class="muted">Arvot tallentuvat tälle laitteelle. Voit päivittää koska tahansa.</p>
     `;
-    form.addEventListener('submit', e=>{
-      e.preventDefault();
-      const fd = new FormData(form);
-      Object.keys(state.oneRM).forEach(k=>state.oneRM[k]=Number(fd.get(k)));
-      saveState();
-      alert('Tallennettu!');
-    });
-    card.appendChild(form);
     c.appendChild(card);
+
+    $('#saveRM').onclick = ()=>{
+      ['snatch','cj','deadlift','frontSquat','backSquat','bench'].forEach(k=>{
+        const el = document.querySelector(`input[name="${k}"]`);
+        state.oneRM[k] = Number(el.value||0);
+      });
+      save(); alert('Tallennettu');
+    };
+    $('#openProgram').onclick = ()=> navigate('program');
   }
 
   function renderProgram(){
-    const c = document.getElementById('content'); c.innerHTML='';
-    const w = state.program[currentWeek];
-    const d = w.days[currentDay];
+    const c = $('#content'); c.innerHTML='';
+    const w = state.program[curW];
+    const d = w.days[curD];
 
-    const head = el('div','card'); head.innerHTML=`<h3>Viikko ${w.week} · ${w.phase}</h3><h4>${d.title}</h4>`; c.appendChild(head);
+    const head = el('div','card');
+    head.innerHTML = `<h3>Viikko ${w.week} · ${w.phase}</h3><h4>${d.title}</h4>`;
+    c.appendChild(head);
 
-    const main = el('div','card'); 
-    const rm = state.oneRM[mapToKey(d.main.name)];
-    const low = roundKg(rm*d.main.pctFrom/100), high = roundKg(rm*d.main.pctTo/100);
-    main.innerHTML=`<h4>${d.main.name}</h4><p>${d.main.sets}×${d.main.reps} — ~${low}–${high}kg</p><p>${d.main.notes}</p>`;
+    const main = el('div','card');
+    const rm = state.oneRM[d.main.key] || 0;
+    const low = kg(rm*d.main.pctFrom/100), high = kg(rm*d.main.pctTo/100);
+    main.innerHTML = `
+      <h4>${d.main.name} (pääliike)</h4>
+      <p>${d.main.sets}×${d.main.reps} — ${d.main.pctFrom}%–${d.main.pctTo}% → <span class="kg">${low}–${high} kg</span></p>
+      <p class="muted">${d.main.notes}</p>
+    `;
     c.appendChild(main);
 
-    d.accessories.forEach(a=>{ const acc = el('div','card'); acc.innerHTML=`<p>${a.name} — ${a.sets}×${a.reps}</p>`; c.appendChild(acc); });
-    const core = el('div','card'); core.innerHTML=`<p>${d.core.name} — ${d.core.sets}×${d.core.reps}</p>`; c.appendChild(core);
+    d.accessories.forEach(a=>{
+      const acc = el('div','card');
+      acc.innerHTML = `<h4>${a.name}</h4><p>${a.sets}×${a.reps}</p>`;
+      c.appendChild(acc);
+    });
 
-    const ctrl = el('div','card');
-    const prevBtn = el('button'); prevBtn.textContent='◀ Edellinen'; prevBtn.onclick=()=>{prev();};
-    const nextBtn = el('button'); nextBtn.textContent='Seuraava ▶'; nextBtn.onclick=()=>{next();};
-    ctrl.appendChild(prevBtn); ctrl.appendChild(nextBtn);
-    c.appendChild(ctrl);
+    const core = el('div','card');
+    core.innerHTML = `<h4>Core</h4><p>${d.core.name} — ${d.core.sets}×${d.core.reps}</p>`;
+    c.appendChild(core);
+
+    const ctrl = el('div','card controls');
+    const prev = el('button','btn ghost'); prev.textContent='◀ Edellinen';
+    const next = el('button','btn'); next.textContent='Seuraava ▶';
+    prev.onclick = ()=>{
+      if(curD>0) curD--; else if(curW>0){ curW--; curD=3; }
+      renderProgram();
+    };
+    next.onclick = ()=>{
+      if(curD<3) curD++; else if(curW<7){ curW++; curD=0; }
+      renderProgram();
+    };
+    ctrl.appendChild(prev); ctrl.appendChild(next); c.appendChild(ctrl);
   }
 
   function renderToday(){
-    const c = document.getElementById('content'); c.innerHTML='';
-    const w = state.program[0]; 
-    const weekday = (new Date()).getDay(); 
-    const dayIndex = weekday<=0 ? 0 : ((weekday-1)%4);
-    const d = w.days[dayIndex];
-    const card = el('div','card'); card.innerHTML=`<h3>Tänään — ${d.title}</h3>`;
-    const main = el('div','card'); const rm = state.oneRM[mapToKey(d.main.name)];
-    const low = roundKg(rm*d.main.pctFrom/100), high = roundKg(rm*d.main.pctTo/100);
-    main.innerHTML=`<h4>${d.main.name}</h4><p>${d.main.sets}×${d.main.reps} ~${low}-${high}kg</p>`;
-    c.appendChild(card); c.appendChild(main);
+    const c = $('#content'); c.innerHTML='';
+    // yksinkertainen: viikon 1 treenit, viikonpäivän mukaan
+    const weekday = (new Date()).getDay(); // 0=su..6=la
+    const dIdx = Math.max(0, (weekday-1)) % 4; // ma=0..to=3, pe->0 jne.
+    const w = state.program[0], d = w.days[dIdx];
+
+    const head = el('div','card');
+    head.innerHTML = `<h3>Tänään</h3><p class="muted">Viikko 1 · ${d.title}</p>`;
+    c.appendChild(head);
+
+    const main = el('div','card');
+    const rm = state.oneRM[d.main.key] || 0;
+    const low = kg(rm*d.main.pctFrom/100), high = kg(rm*d.main.pctTo/100);
+    main.innerHTML = `<h4>${d.main.name}</h4><p>${d.main.sets}×${d.main.reps} → <span class="kg">${low}–${high} kg</span></p>`;
+    c.appendChild(main);
+
+    d.accessories.forEach(a=>{
+      const acc = el('div','card'); acc.innerHTML=`<p>${a.name} — ${a.sets}×${a.reps}</p>`; c.appendChild(acc);
+    });
   }
 
   function renderSettings(){ renderHome(); }
 
-  function navigate(page){
-    if(page==='home') renderHome();
-    else if(page==='program') renderProgram();
-    else if(page==='today') renderToday();
-    else if(page==='settings') renderSettings();
+  // ===== Nav =====
+  function navigate(view){
+    if(view==='home') renderHome();
+    else if(view==='program') renderProgram();
+    else if(view==='today') renderToday();
+    else if(view==='settings') renderSettings();
   }
-  function prev(){ if(currentDay>0) currentDay--; else if(currentWeek>0){currentWeek--; currentDay=3;} renderProgram();}
-  function next(){ if(currentDay<3) currentDay++; else if(currentWeek<7){currentWeek++; currentDay=0;} renderProgram(); }
-
   window.navigate = navigate;
-  document.addEventListener('DOMContentLoaded', ()=>{navigate('home');});
+
+  // SW rekisteröinti (ei pakollinen, mutta hyödyllinen Netlifyssä)
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=> navigate('home'));
 })();
