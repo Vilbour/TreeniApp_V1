@@ -1,7 +1,7 @@
 {
-  "name": "Treenipäiväkirja",
-  "short_name": "Treenipäiväkirja",
-  "start_url": "./index.html",
+  "name": "Painonnosto Appi V3",
+  "short_name": "PainoApp",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#0ff",
